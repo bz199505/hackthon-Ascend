@@ -1,44 +1,54 @@
-import React, { useEffect, useState } from "react";
-import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
+import React, { useEffect, useState } from "react"
+import SpeechRecognition, {
+  useSpeechRecognition,
+} from "react-speech-recognition"
 
 const Dictaphone = () => {
-  const { transcript, listening, browserSupportsSpeechRecognition, resetTranscript } = useSpeechRecognition();
-  const [imageUrl, setImageUrl] = useState(null);
-  
+  const {
+    transcript,
+    listening,
+    browserSupportsSpeechRecognition,
+    resetTranscript,
+  } = useSpeechRecognition()
+  const [imageUrl, setImageUrl] = useState(null)
+
   useEffect(() => {
     const debounceTimeout = setTimeout(() => {
       if (transcript.length > 0) {
-        sendData();
+        sendData()
       }
-    }, 1000); // Debounce time of 1000ms
+    }, 1000) // Debounce time of 1000ms
 
-    return () => clearTimeout(debounceTimeout);
-  }, [transcript, resetTranscript]);
+    return () => clearTimeout(debounceTimeout)
+  }, [transcript, resetTranscript])
 
   const sendData = async () => {
     try {
-      const response = await fetch("https://fastapi-production-cd88.up.railway.app/transcript", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ transcript: transcript }),
-        mode: "cors",
-      });
+      const response = await fetch(
+        "https://fastapi-production-cd88.up.railway.app/transcript",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ transcript: transcript }),
+          mode: "cors",
+        }
+      )
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`HTTP error! status: ${response.status}`)
       }
 
-      const data = await response.json();
-      setImageUrl(data.message);
+      const data = await response.json()
+      setImageUrl(data.message)
     } catch (error) {
-      console.error("Network error:", error);
+      console.error("Network error:", error)
     }
-  };
+  }
 
   if (!browserSupportsSpeechRecognition) {
-    return <span>Browser doesn't support speech recognition.</span>;
+    return <span>Browser doesn't support speech recognition.</span>
   }
 
   return (
@@ -47,8 +57,12 @@ const Dictaphone = () => {
         <p>Microphone: {listening ? "on" : "off"}</p>
         <button
           className="neon-button"
-          onTouchStart={() => SpeechRecognition.startListening({ continuous: true })}
-          onMouseDown={() => SpeechRecognition.startListening({ continuous: true })}
+          onTouchStart={() => {
+            SpeechRecognition.startListening()
+          }}
+          onMouseDown={() =>
+            SpeechRecognition.startListening()
+          }
           onTouchEnd={SpeechRecognition.stopListening}
           onMouseUp={SpeechRecognition.stopListening}
         >
@@ -70,7 +84,7 @@ const Dictaphone = () => {
         />
       )}
     </>
-  );
-};
+  )
+}
 
-export default Dictaphone;
+export default Dictaphone
