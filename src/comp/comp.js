@@ -1,69 +1,54 @@
-import React, { useEffect, useState } from "react"
-//import { createSpeechlySpeechRecognition } from '@speechly/speech-recognition-polyfill';
-import SpeechRecognition, {
-  useSpeechRecognition,
-} from "react-speech-recognition"
-
-const appId = "<INSERT_SPEECHLY_APP_ID_HERE>"
-//const SpeechlySpeechRecognition = createSpeechlySpeechRecognition(appId);
-//SpeechRecognition.applyPolyfill(SpeechlySpeechRecognition);
+import React, { useEffect, useState } from "react";
+import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
 
 const Dictaphone = () => {
-  const { transcript = 'https://fastapi-production-cd88.up.railway.app/transcript', listening, browserSupportsSpeechRecognition, resetTranscript } =
-    useSpeechRecognition()
-  const startListening = () =>
-    SpeechRecognition.startListening({ continuous: true })
-
-  const [imageUrl, setImageUrl] = useState(null)
-
+  const { transcript, listening, browserSupportsSpeechRecognition, resetTranscript } = useSpeechRecognition();
+  const [imageUrl, setImageUrl] = useState(null);
+  
   useEffect(() => {
-    const words = transcript.split(" ")
-    if (words.length >= 0 && transcript.length > 0) {
-      const sendData = async () => {
-        console.log(666)
-        try {
-          const response = await fetch(
-            "https://fastapi-production-cd88.up.railway.app/transcript",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ transcript: transcript }),
-              mode: "cors",
-            }
-          )
+    const debounceTimeout = setTimeout(() => {
+      if (transcript.length > 0) {
+        sendData();
+      }
+    }, 1000); // Debounce time of 1000ms
 
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`)
-          }
+    return () => clearTimeout(debounceTimeout);
+  }, [transcript, resetTranscript]);
 
-          const data = await response.json()
-          setImageUrl(data.message)
-        } catch (error) {
-          console.error("Network error:", error)
-        }
+  const sendData = async () => {
+    try {
+      const response = await fetch("https://fastapi-production-cd88.up.railway.app/transcript", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ transcript: transcript }),
+        mode: "cors",
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      sendData()
-      resetTranscript()
+      const data = await response.json();
+      setImageUrl(data.message);
+    } catch (error) {
+      console.error("Network error:", error);
     }
-  }, [transcript, resetTranscript])
+  };
 
   if (!browserSupportsSpeechRecognition) {
-    return <span>Browser doesn't support speech recognition.</span>
+    return <span>Browser doesn't support speech recognition.</span>;
   }
 
   return (
     <>
-      {/* Microphone */}
       <div>
         <p>Microphone: {listening ? "on" : "off"}</p>
         <button
           className="neon-button"
-          onTouchStart={startListening}
-          onMouseDown={startListening}
-          onClick={resetTranscript}
+          onTouchStart={() => SpeechRecognition.startListening({ continuous: true })}
+          onMouseDown={() => SpeechRecognition.startListening({ continuous: true })}
           onTouchEnd={SpeechRecognition.stopListening}
           onMouseUp={SpeechRecognition.stopListening}
         >
@@ -71,21 +56,21 @@ const Dictaphone = () => {
         </button>
         <p>{transcript}</p>
       </div>
-      {/* picture */}
       {imageUrl && (
         <img
           src={imageUrl}
           alt="AI Generated"
-          loading={"lazy"}
+          loading="lazy"
           style={{
-            width: "90%",
-            height: "90%",
+            width: "400px",
+            height: "400px",
             borderRadius: "25px",
             boxShadow: "0  0  8px  3px rgba(255,  255,  255,  0.5)",
           }}
         />
       )}
     </>
-  )
-}
-export default Dictaphone
+  );
+};
+
+export default Dictaphone;
